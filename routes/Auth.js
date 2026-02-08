@@ -40,12 +40,25 @@ router.post('/login', async (req, res) => {
 });
 
 // 2. SHOW DATA: Get user and their notes
-router.get('/:userId', async (req, res) => {
+// GET all notes for a specific user
+router.get('/:userId/notes', async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
-    res.json(user);
-  } catch (err) {
-    res.status(404).json({ message: "User not found" });
+    const { userId } = req.params;
+
+    // 1. Find the user in MongoDB
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 2. Return the notes array from the user document
+    // If you don't have a 'notes' field yet, return an empty array []
+    res.json(user.notes || []);
+
+  } catch (error) {
+    console.error("Backend Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
