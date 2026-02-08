@@ -1,0 +1,68 @@
+// routes/userRoutes.js
+const express = require('express');
+const router = express.Router();
+const User = require('../Models/User.js');
+
+// 1. AUTH: Register a new user
+router.post('/register', async (req, res) => {
+  try {
+    const newUser = new User(req.body);
+    await newUser.save();
+    res.status(201).json({ message: "User created!", user: newUser });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+//login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if password matches (Plain text for now)
+    if (user.password !== password) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Success! Return user data (excluding password for safety)
+    const { password: _, ...userData } = user._doc;
+    res.status(200).json({ message: "Login successful", user: userData });
+    
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. SHOW DATA: Get user and their notes
+router.get('/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    res.json(user);
+  } catch (err) {
+    res.status(404).json({ message: "User not found" });
+  }
+});
+
+// 3. ADD DATA: Add a new note/score to a user
+router.post('/:userId/notes', async (req, res) => {
+  try {
+    const { note, score } = req.body;
+    const user = await User.findById(req.params.userId);
+    
+    user.notes.push({ note, score, timestamp: Date.now() });
+    await user.save();
+    
+    res.status(200).json(user.notes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+module.exports = router;
