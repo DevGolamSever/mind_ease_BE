@@ -77,5 +77,79 @@ router.post('/:userId/notes', async (req, res) => {
   }
 });
 
+//delete notes 
+
+// DELETE a note by MongoDB _id
+router.delete('/:userId/notes/:noteId', async (req, res) => {
+  try {
+    const { userId, noteId } = req.params;
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Remove the note with matching _id
+    const originalLength = user.notes.length;
+    user.notes = user.notes.filter(n => n._id.toString() !== noteId);
+
+    if (user.notes.length === originalLength) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
+    // Save updated user document
+    await user.save();
+
+    res.status(200).json({ message: "Note deleted successfully", notes: user.notes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+ 
+// GET chat history for a user
+router.get('/:userId/messages', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user.messages || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ADD a chat message
+router.post('/:userId/messages', async (req, res) => {
+  try {
+    const { id, role, text } = req.body;
+
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.messages.push({
+      id: id || Date.now().toString(),
+      role,
+      text,
+      timestamp: new Date()
+    });
+
+    await user.save();
+
+    res.status(200).json(user.messages);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 module.exports = router;

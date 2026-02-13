@@ -1,6 +1,19 @@
 // Models/User.js
 const mongoose = require('mongoose');
 
+
+const MessageSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  role: { 
+    type: String, 
+    enum: ['user', 'model'], 
+    required: true 
+  },
+  text: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now }
+}, { _id: false });
+
+
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -12,8 +25,8 @@ const UserSchema = new mongoose.Schema({
     score: Number,
     timestamp: Number
   }],
-  // For your chat history (Screenshot 3)
-
+  // Chat History
+  messages: [MessageSchema]
 });
 
 module.exports = mongoose.model('User', UserSchema);
