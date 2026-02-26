@@ -63,20 +63,61 @@ router.get('/:userId/notes', async (req, res) => {
 });
 
 // 3. ADD DATA: Add a new note/score to a user
+// router.post('/:userId/notes', async (req, res) => {
+//   try {
+//     const { note, score } = req.body;
+//     const user = await User.findById(req.params.userId);
+    
+//     user.notes.push({ note, score, timestamp: Date.now() });
+//     await user.save();
+    
+//     res.status(200).json(user.notes);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 router.post('/:userId/notes', async (req, res) => {
   try {
     const { note, score } = req.body;
     const user = await User.findById(req.params.userId);
-    
-    user.notes.push({ note, score, timestamp: Date.now() });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 1️⃣ Add new mood entry
+    user.notes.push({
+      note,
+      score,
+      timestamp: Date.now()
+    });
+
+    // 2️⃣ Count good mood logs (score >= 6)
+    const goodLogs = user.notes.filter(n => n.score >= 6).length;
+
+    // 3️⃣ Calculate how many badges user should have
+    const expectedBadges = Math.floor(goodLogs / 5);
+
+    let newBadgeEarned = false;
+
+    // 4️⃣ If badge count increased
+    if (expectedBadges > user.badgeCount) {
+      user.badgeCount = expectedBadges;
+      newBadgeEarned = true;
+    }
+
     await user.save();
-    
-    res.status(200).json(user.notes);
+
+    res.status(200).json({
+      notes: user.notes,
+      badgeCount: user.badgeCount,
+      newBadgeEarned
+    });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 //delete notes 
 
 // DELETE a note by MongoDB _id
@@ -151,5 +192,20 @@ router.post('/:userId/messages', async (req, res) => {
   }
 });
 
+
+// GET user badges
+router.get('/:userId/badges', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user.badges || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

@@ -14,6 +14,7 @@ const MessageSchema = new mongoose.Schema({
 }, { _id: false });
 
 
+
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -26,7 +27,9 @@ const UserSchema = new mongoose.Schema({
     timestamp: Number
   }],
   // Chat History
-  messages: [MessageSchema]
+  messages: [MessageSchema],
+ // Badge count only
+  badgeCount: { type: Number, default: 0 } // 👈 store just the number
 });
 
 module.exports = mongoose.model('User', UserSchema);
